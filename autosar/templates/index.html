@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+</head>
+<style>
+    #camera{
+        width: 350px;
+        height: 350px;
+        border: 1px solid black;
+    }
+</style>
+<body>
+    {%csrf_token%}
+    <div class="box" style="display: flex;">
+        <div class="container">
+            <div class="camera" id="camera"></div>
+            <button onclick="take_snapshot()">Take Snapshot</button>
+            <div class="results" id="results"></div>
+        </div>
+        <div id="embed-iframe"></div>
+    </div>
+    <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+</body>
+
+<body>
+    <div class="episodes">
+        <button id="playspotify" class="episode" data-spotify-id="" style="display: none;">fdkjhdsgklfj
+        </button>
+    </div>
+    
+    <script src="https://open.spotify.com/embed/iframe-api/v1" async>
+    </script>
+    <script type="text/javascript">
+        window.onSpotifyIframeApiReady = (IFrameAPI) => {
+            const element = document.getElementById('embed-iframe');
+            const options = {
+                width: '100%',
+                height: '650',
+                uri: ''
+            };
+            const callback = (EmbedController) => {
+                document.querySelectorAll('.episode').forEach(
+                    episode => {
+                        episode.addEventListener('click', () => {
+                            EmbedController.loadUri(episode.dataset.spotifyId)
+                        });
+                    })
+                };
+                IFrameAPI.createController(element, options, callback);
+            };
+            </script>
+  </body>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/webcamjs/1.0.26/webcam.min.js">
+  </script>
+  <div id="embed-iframe"></div>
+  <script>
+    let visible = false;
+
+
+    Webcam.set({
+        width: 350,
+        height: 350,
+        image_format: 'jpeg',
+        jpeg_quality: 90
+    })
+
+    Webcam.attach("#camera")
+    function take_snapshot(){
+        Webcam.snap(function(data_url){
+            console.log(data_url);
+            document.getElementById('results').innerHTML = '<img src="'+data_url+'"/>';
+            let xhr = new XMLHttpRequest()
+            xhr.open("POST","/predict")
+            xhr.setRequestHeader("X-CSRFToken",document.getElementsByName("csrfmiddlewaretoken")[0].value)
+            xhr.send(JSON.stringify({"img":data_url}))
+            xhr.onreadystatechange = function (){
+                let playlist = JSON.parse(this.responseText)["playlist"]
+                let temp = document.getElementById("playspotify");
+                temp.setAttribute("data-spotify-id",`spotify:playlist:${playlist}:play`);
+                temp.click()
+                if(visible == false){
+                    document.getElementById("embed-iframe").style.display="block"
+                }
+            }
+        });
+    }
+
+</script>
+
+</html>
